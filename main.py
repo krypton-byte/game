@@ -1,12 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from colorama import Fore, Back
+from colorama import Fore, Back, init
 import random
-import threading
 import termios
 import sys
 import time
 import contextlib
 from os import get_terminal_size
+import os
 import time
 kanan = 'd'
 kiri = 'a'
@@ -16,6 +16,7 @@ atas = 'w'
 bawah = 's'
 menembak = ' '
 s_batu = 'x'
+init(True)
 class tembak:
     peluru_code = "*"
     user = '^'
@@ -23,6 +24,8 @@ class tembak:
     batu = "@"
     def __init__(self) -> None:
         self.terminal_size = get_terminal_size()
+        self.clear = os.popen( 'cls' if os.name == 'nt' else 'clear').read()
+        self.color = ""
     def setup_game(self):
         self.board = [ ['']*self.terminal_size[0] for i in range(self.terminal_size[1]-1)]#np.zeros([get_terminal_size()[1]-1, get_terminal_size()[0]], str)
         self.position = [self.terminal_size[0]//2, self.terminal_size[1]-3]
