@@ -26,10 +26,10 @@ class tembak:
         self.terminal_size = get_terminal_size()
         self.clear = os.popen( 'cls' if os.name == 'nt' else 'clear').read()
         self.color = ""
+        self.asteroids=[]
     def setup_game(self):
         self.board = [ ['']*self.terminal_size[0] for i in range(self.terminal_size[1]-1)]#np.zeros([get_terminal_size()[1]-1, get_terminal_size()[0]], str)
         self.position = [self.terminal_size[0]//2, self.terminal_size[1]-3]
-        self.asteroids=[]
         self.createFrame()
         #signal.signal(2, self.shutdown)
         self.board[self.position[1]][self.position[0]] = self.user
@@ -105,6 +105,7 @@ class tembak:
                 self.asteroid()
                 times=time.time()+3
             for x,y in random.sample(self.asteroids, self.asteroids.__len__()):
+                try:
                     if self.board[y][x] == self.batu and self.board[y+1][x] == self.batu:
                         True
                     elif self.board[y][x] == self.batu and  y == self.board.__len__()-2:
@@ -118,6 +119,8 @@ class tembak:
                         self.board[y][x]=self.blank
                         self.board[y+1][x] = self.batu
                         time.sleep(0.1)
+                except IndexError:
+                    pass
     def asteroid(self):
         batu = random.sample(range(1,self.board[0].__len__()-1),8)
         for i in batu:
