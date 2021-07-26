@@ -2,7 +2,7 @@
 ```
 > pip install colorama
 ```
-# RUN FILE
+# RUN A FILE
 ```
 > python main.py
 ```
