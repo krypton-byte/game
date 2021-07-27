@@ -222,12 +222,13 @@ class tembak:
                 self.shutdown()
                 break
             elif x==self.terminal_size[0] and y==self.terminal_size[1]:
-                print('\x1b[H\x1b[2J\x1b[3J'+i)
+                print(self.clear+i)
                 time.sleep(0.01)
             else:
                 self.terminal_size = get_terminal_size()
                 self.setup_game()
                     
-game = tembak()
-game.setup_game()
-game.start_()
+if __name__ == '__main__':
+    game = tembak()
+    game.setup_game()
+    game.start_()
