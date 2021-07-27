@@ -11,11 +11,14 @@ import time
 kanan = 'd'
 kiri = 'a'
 cheat = 'c'
+restart = 'r'
+show_fps = 'f'
 auto = "g"
 atas = 'w'
 bawah = 's'
 menembak = ' '
 s_batu = 'x'
+quit_k = 'q'
 init(True)
 class tembak:
     peluru_code = "*"
@@ -26,6 +29,10 @@ class tembak:
         self.terminal_size = get_terminal_size()
         self.clear = os.popen( 'cls' if os.name == 'nt' else 'clear').read()
         self.color = ""
+        self.fps = False
+        self.fps_counter = 0
+        self.fps_stuck = 0
+        self.deactive = 0
         self.asteroids=[]
     def setup_game(self):
         self.board = [ ['']*self.terminal_size[0] for i in range(self.terminal_size[1]-1)]#np.zeros([get_terminal_size()[1]-1, get_terminal_size()[0]], str)
@@ -45,10 +52,10 @@ class tembak:
         #self.thr.start()
         #self.thr2.start()
         #self.thr3.start()
-        self.thr.submit(self.send_keys)
         self.thr.submit(self.tembak)
         self.thr.submit(self.asteroid_move)
-        self.display()
+        self.thr.submit(self.display)
+        self.send_keys()
     def createFrame(self):
         self.board[0][0] = "+"
         self.board[0][-1] ="+"
@@ -76,10 +83,25 @@ class tembak:
         for i in enumerate(f"{round(calc//60).__str__().zfill(2)}:{round(calc%60).__str__().zfill(2)}", 1):
             if not self.board[1][i[0]] in [self.batu, self.user]:
                 self.board[1][i[0]] = Fore.YELLOW+i[1]+Fore.RESET
+        for i in enumerate(f"{self.fps_stuck} fps",1):
+            if not self.board[-2][i[0]] in [self.batu, self.user]:
+                self.board[-2][i[0]] = Fore.GREEN+i[1]+Fore.RESET if self.fps else ''
+    def shutdown(self):
+        tmp = self.deactive = self.deactive+1
+        while True:
+            for i in ['/','-','\\','|']:
+                sys.stdout.write(f'\r{Fore.LIGHTGREEN_EX}Shutdown {Fore.RESET}[{i}] {Fore.LIGHTRED_EX}{round((self.deactive/4)*100)}%{Fore.RESET}    ')
+                sys.stdout.flush()
+                time.sleep(0.1)
+                if tmp != self.deactive or tmp==4:
+                    break
+            if tmp != self.deactive or tmp==4:
+                break
     def tembak(self):
         while True:
             #print('a')
             if self.stop:
+                self.shutdown()
                 break
             for y in range(self.board.__len__()):
                 for x in range(self.board[y].__len__()):
@@ -100,6 +122,7 @@ class tembak:
         times = time.time()
         while True:
             if self.stop:
+                self.shutdown()
                 break
             elif times<time.time():
                 self.asteroid()
@@ -167,31 +190,43 @@ class tembak:
         h = ""
         with self.raw_mode(sys.stdin):
             while True:
-                if self.stop:
+                try:
+                    h = sys.stdin.read(1).lower()
+                    #print(h.__repr__())
+                    self.pindah(kanan=1) if h == kanan else self.pindah(kiri=1) if h==kiri else self.pindah(bawah=1) if h == bawah else self.pindah(atas=1) if h==atas else self.menembak() if h == menembak else self.asteroid() if h==s_batu else self.auto() if h==auto else ''
+                    if h==cheat and self.position[1]>1:
+                        for i in range(1, self.board[0].__len__()-1):
+                            self.board[self.position[1]-1][i] = self.peluru_code
+                    elif h==show_fps:
+                        self.fps = not self.fps
+                    elif h==restart:
+                        self.start = time.time()
+                        self.score = 0
+                        self.setup_game()
+                except KeyboardInterrupt:
+                    self.stop=True
+                    self.shutdown()
                     break
-                h = sys.stdin.read(1).lower()
-                #print(h.__repr__())
-                self.pindah(kanan=1) if h == kanan else self.pindah(kiri=1) if h==kiri else self.position[0]
-                self.pindah(bawah=1) if h == bawah else self.pindah(atas=1) if h==atas else self.position[1]
-                self.menembak() if h == menembak else self.asteroid() if h==s_batu else self.auto() if h==auto else ''
-                if h==cheat and self.position[1]>1:
-                    for i in range(1, self.board[0].__len__()-1):
-                        self.board[self.position[1]-1][i] = self.peluru_code
     def display(self):
         self.asteroid()
+        detik = time.time()
         for i in self.toScrren():
-            try:
-                x, y = get_terminal_size()
-                if self.stop:
-                    break
-                elif x==self.terminal_size[0] and y==self.terminal_size[1]:
-                    print('\x1b[H\x1b[2J\x1b[3J'+i)
-                    time.sleep(0.01)
-                else:
-                    self.terminal_size = get_terminal_size()
-                    self.setup_game()
-            except KeyboardInterrupt:
-                self.stop = True
+            if self.fps:
+                if time.time() - detik >=1:
+                    self.fps_stuck=self.fps_counter
+                    self.fps_counter=0
+                    detik=time.time()
+                self.fps_counter+=1
+            x, y = get_terminal_size()
+            if self.stop:
+                self.shutdown()
+                break
+            elif x==self.terminal_size[0] and y==self.terminal_size[1]:
+                print('\x1b[H\x1b[2J\x1b[3J'+i)
+                time.sleep(0.01)
+            else:
+                self.terminal_size = get_terminal_size()
+                self.setup_game()
                     
 game = tembak()
 game.setup_game()
